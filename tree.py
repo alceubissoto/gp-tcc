@@ -27,7 +27,7 @@ class BinaryNode(object):
 
     def addBinaryNode(self, binaryNode):
         if len(self.children) < self.arity:
-            print 'ADICIONOU: ', binaryNode.value
+            #print 'ADICIONOU: ', binaryNode.value
             self.children.append(binaryNode)
             self.size += 1
             return True
@@ -36,8 +36,39 @@ class BinaryNode(object):
                 if child.addBinaryNode(binaryNode):
                     return True
         else:
-            print 'FALHOU: ', binaryNode.value
+            #print 'FALHOU: ', binaryNode.value
             return False
+
+    def getSizeTree(self):
+        counter = len(self.children)
+        for child in self.children:
+            counter += child.getSizeTree()
+        return counter
+
+    def selectNode(self, counter, t2):
+        if counter == 0:
+            return self
+        else:
+            for child in self.children:
+                if child.getSizeTree()+1 >= counter:
+                    return child.selectNode(counter-1, t2)
+                else:
+                    counter -= child.getSizeTree()+1
+
+
+    def crossOver(self, counter, t2):
+        if counter == 0:
+            return
+        for child in self.children:
+            if child.getSizeTree()+1 >= counter:
+                if len(child.children) >= counter:
+                    child.children[counter-1] = t2
+                else:
+                    return child.crossOver(counter-1, t2)
+            else:
+                counter -= child.getSizeTree()+1
+        
+
 
 
 def generateRandomTree(listOperations, listTerminals):
@@ -57,32 +88,25 @@ def generateRandomTree(listOperations, listTerminals):
            random_Terminal = random.randrange(0,len(listTerminals))
            if newNode.addBinaryNode(BinaryNode(listTerminals[random_Terminal], 0, [])):
                emptyTerminals -= 1
-        print emptyTerminals
+#        print emptyTerminals
     try:
         newNode.evaluate()
     except ZeroDivisionError:
         return generateRandomTree(listOperations, listTerminals)
     return newNode
 
-def getSizeTree(t1):
-    counter = len(t1.children)
-    for child in t1.children:
-        counter += getSizeTree(child)
-    return counter
 
-def selectNode(t1, counter):
-    if counter == 0:
-        return t1
-    else:
-       for child in t1.children:
-           if getSizeTree(child)+1 >= counter:
-               return selectNode(child, counter-1)
-           else:
-              counter -= getSizeTree(child)+1
+
+
+#def getSizeTree(t1):
+#    counter = len(t1.children)
+#    for child in t1.children:
+#        counter += getSizeTree(child)
+#    return counter
 
 lO = [['+',2],['*',2],['-',2],['/',2]]
 lT = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
+lT2 = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 geno = []
 #for i in range(1, 10):
 #    newNode = generateRandomTree(lO, lT)
@@ -94,8 +118,15 @@ geno = []
 
 
 new = generateRandomTree(lO, lT) 
-print new, "size: ", getSizeTree(new)
-print selectNode(new, 3)
+new2 = generateRandomTree(lO, lT2)
+print new, "size: ", new.getSizeTree()
+
+
+
+print "ORIGINAL: \n", new
+print "NEW BRANCH: \n", new2
+new.crossOver(2, new2)
+print "THE NEW TREE: \n", new
 #print 'EVALUATION: ', new.evaluate()
 #node = BinaryNode('*', 2)
 #node.addBinaryNode(BinaryNode(10, 0, []))
