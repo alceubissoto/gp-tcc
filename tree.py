@@ -110,7 +110,7 @@ def generateRandomTree(listOperations, listTerminals):
 
 
 x = np.array([-1000.0,-500.0,-100.0,0.0,100.0,500.0,1000.0])
-func = eval('x**3+2*x**2+x+122')
+func = eval('x**2+x')
 lO = [['+',2],['*',2],['-',2]]
 lT = ['x', 1.0, 2.0]
 lT2 = ['x', 3.0, 5.0]
@@ -126,10 +126,13 @@ population = []
 while(difference > 5.0):
     for i in range(1, 10):
         new = generateRandomTree(lO, lT)
-        population.append({'fitness':new.evaluate(x),'tree':new})
+        population.append({'fitness':np.sum(np.power(new.evaluate(x)-func,2)),'tree':new})
     difference = 0
 
-print population[0]
+
+
+newlist = sorted(population, key=lambda ind: ind['fitness'])
+print population 
 #    new=generateRandomTree(lO, lT)
 #    almostthere = np.power(new.evaluate(x)-func,2)
 #    print almostthere
