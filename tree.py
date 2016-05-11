@@ -1,5 +1,6 @@
-import random
+import random, math
 import numpy as np
+
 class BinaryNode(object):
     def __init__(self, value = None, arity = 2, children = [], size=0):
         self.value = value
@@ -108,29 +109,45 @@ def generateRandomTree(listOperations, listTerminals):
     
 
 
-x = np.array([-1000,-500,-100,-10,0,10,100,500,1000])
-func = eval('x**2+x-10')
+x = np.array([-1000.0,-500.0,-100.0,0.0,100.0,500.0,1000.0])
+func = eval('x**3+2*x**2+x+122')
 lO = [['+',2],['*',2],['-',2]]
-lT = ['x', 3, 4]
-lT2 = ['x', 12, 13]
+lT = ['x', 1.0, 2.0]
+lT2 = ['x', 3.0, 5.0]
 #for i in range(1, 10):
 #    newNode = generateRandomTree(lO, lT)
 #    geno.append(newNode)
 
 #for i in range(1, 10):
 #    print geno[i-1], "with size: ", geno[i-1].size
+difference = 10.0
+count =0
+population = []
+while(difference > 5.0):
+    for i in range(1, 10):
+        new = generateRandomTree(lO, lT)
+        population.append({'fitness':new.evaluate(x),'tree':new})
+    difference = 0
 
+print population[0]
+#    new=generateRandomTree(lO, lT)
+#    almostthere = np.power(new.evaluate(x)-func,2)
+#    print almostthere
+#    difference = np.sum(almostthere)
+#    print difference
+#    count += 1
+#    if difference < 0:
+#        difference = 10 
+#print new, "".join([str(a) for a in new.writeFunc([])]), "\nCounter: ", count, "\nDifference:", difference
 
+#new = generateRandomTree(lO, lT) 
+#new2 = generateRandomTree(lO, lT2)
 
-new = generateRandomTree(lO, lT) 
-new2 = generateRandomTree(lO, lT2)
-
-print "ORIGINAL: \n", new, "size: ", new.getSize(), "NOTA: ", new.evaluate(x)
-print "NEW BRANCH: \n", new2, "size: ", new2.getSize(), "NOTA: ", new2.evaluate(x)
-new.crossOver(3, new2)
-print "THE NEW TREE: \n", new, "\nsize: ", new.getSize(), "\nNOTA: ", new.evaluate(x), "\nFUNC: ", "".join([str(x) for x in new.writeFunc([])])
-#print "Difference: ", (new.evaluate(x)-func)**2
-#print 'EVALUATION: ', new.evaluate()
+#print "ORIGINAL: \n", new, "size: ", new.getSize(), "NOTA: ", new.evaluate(x)
+#print "NEW BRANCH: \n", new2, "size: ", new2.getSize(), "NOTA: ", new2.evaluate(x)
+#new.crossOver(3, new2)
+#print "THE NEW TREE: \n", new, "\nsize: ", new.getSize(), "\nNOTA: ", new.evaluate(x), "\nFUNC: ", "".join([str(a) for a in new.writeFunc([])])
+#print "Difference: ", np.sum((new.evaluate(x)-func)**2)
 #node = BinaryNode('*', 2)
 #node.addBinaryNode(BinaryNode(10, 0, []))
 #node.addBinaryNode(BinaryNode('+', 2, []))
