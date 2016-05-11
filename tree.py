@@ -1,5 +1,5 @@
 import random
-
+import numpy as np
 class BinaryNode(object):
     def __init__(self, value = None, arity = 2, children = [], size=0):
         self.value = value
@@ -13,18 +13,31 @@ class BinaryNode(object):
             ret += child.__repr__(level+1)
         return ret
 
-    def evaluate(self):
-        if self.value == '+':
-            return self.children[0].evaluate() + self.children[1].evaluate()
+    def evaluate(self, x):
+        if self.value == 'x':
+            return x
+        elif self.value == '+':
+            return self.children[0].evaluate(x) + self.children[1].evaluate(x)
         elif self.value == '-':
-            return self.children[0].evaluate() - self.children[1].evaluate()
+            return self.children[0].evaluate(x) - self.children[1].evaluate(x)
         elif self.value == '*':
-            return self.children[0].evaluate() * self.children[1].evaluate()
+            return self.children[0].evaluate(x) * self.children[1].evaluate(x)
         elif self.value == '/':
-            return self.children[0].evaluate() / self.children[1].evaluate()
+            return self.children[0].evaluate(x) / self.children[1].evaluate(x)
         else:
             return self.value
 
+    def writeFunc(self, array):
+        if len(self.children) == 2:
+            array.append('(')
+            self.children[0].writeFunc(array)
+            array.append(self.value)
+            self.children[1].writeFunc(array)
+            array.append(')')
+        else:
+            array.append(self.value)
+        return array
+        
     def addBinaryNode(self, binaryNode):
         if len(self.children) < self.arity:
             #print 'ADICIONOU: ', binaryNode.value
@@ -39,10 +52,10 @@ class BinaryNode(object):
             #print 'FALHOU: ', binaryNode.value
             return False
 
-    def getSizeTree(self):
+    def getSize(self):
         counter = len(self.children)
         for child in self.children:
-            counter += child.getSizeTree()
+            counter += child.getSize()
         return counter
 
     def selectNode(self, counter, t2):
@@ -50,23 +63,24 @@ class BinaryNode(object):
             return self
         else:
             for child in self.children:
-                if child.getSizeTree()+1 >= counter:
+                if child.getSize()+1 >= counter:
                     return child.selectNode(counter-1, t2)
                 else:
-                    counter -= child.getSizeTree()+1
+                    counter -= child.getSize()+1
 
 
     def crossOver(self, counter, t2):
         if counter == 0:
             return
-        for child in self.children:
-            if child.getSizeTree()+1 >= counter:
-                if len(child.children) >= counter:
-                    child.children[counter-1] = t2
+        elif len(self.children) >= counter:
+           self.children[counter-1] = t2
+        else:
+            counter -= len(self.children)
+            for child in self.children:
+                if child.getSize() >= counter:
+                    return child.crossOver(counter, t2)
                 else:
-                    return child.crossOver(counter-1, t2)
-            else:
-                counter -= child.getSizeTree()+1
+                    counter -= child.getSize()
         
 
 
@@ -89,25 +103,16 @@ def generateRandomTree(listOperations, listTerminals):
            if newNode.addBinaryNode(BinaryNode(listTerminals[random_Terminal], 0, [])):
                emptyTerminals -= 1
 #        print emptyTerminals
-    try:
-        newNode.evaluate()
-    except ZeroDivisionError:
-        return generateRandomTree(listOperations, listTerminals)
     return newNode
 
+    
 
 
-
-#def getSizeTree(t1):
-#    counter = len(t1.children)
-#    for child in t1.children:
-#        counter += getSizeTree(child)
-#    return counter
-
-lO = [['+',2],['*',2],['-',2],['/',2]]
-lT = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-lT2 = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-geno = []
+x = np.array([-1000,-500,-100,-10,0,10,100,500,1000])
+func = eval('x**2+x-10')
+lO = [['+',2],['*',2],['-',2]]
+lT = ['x', 3, 4]
+lT2 = ['x', 12, 13]
 #for i in range(1, 10):
 #    newNode = generateRandomTree(lO, lT)
 #    geno.append(newNode)
@@ -119,14 +124,12 @@ geno = []
 
 new = generateRandomTree(lO, lT) 
 new2 = generateRandomTree(lO, lT2)
-print new, "size: ", new.getSizeTree()
 
-
-
-print "ORIGINAL: \n", new
-print "NEW BRANCH: \n", new2
-new.crossOver(2, new2)
-print "THE NEW TREE: \n", new
+print "ORIGINAL: \n", new, "size: ", new.getSize(), "NOTA: ", new.evaluate(x)
+print "NEW BRANCH: \n", new2, "size: ", new2.getSize(), "NOTA: ", new2.evaluate(x)
+new.crossOver(3, new2)
+print "THE NEW TREE: \n", new, "\nsize: ", new.getSize(), "\nNOTA: ", new.evaluate(x), "\nFUNC: ", "".join([str(x) for x in new.writeFunc([])])
+#print "Difference: ", (new.evaluate(x)-func)**2
 #print 'EVALUATION: ', new.evaluate()
 #node = BinaryNode('*', 2)
 #node.addBinaryNode(BinaryNode(10, 0, []))
