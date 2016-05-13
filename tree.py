@@ -74,30 +74,41 @@ class BinaryNode(object):
 		nodes = newNodes
 	return len(results)
 
-    def selectNode(self, counter, t2):
+    def selectNode(self, counter):
         if counter == 0:
             return self
-        else:
-            for child in self.children:
-                if child.getSize()+1 >= counter:
-                    return child.selectNode(counter-1, t2)
-                else:
-                    counter -= child.getSize()+1
-
-
-    def crossOver(self, counter, t2):
-        if counter == 0:
-            return
-        elif len(self.children) >= counter:
-            self.children[counter-1] = t2
+        if len(self.children) >= counter:
+            return self.children[counter-1]
         else:
             counter -= len(self.children)
             for child in self.children:
                 if child.getSize() >= counter:
-                    return child.crossOver(counter, t2)
+                    return child.selectNode(counter)
                 else:
                     counter -= child.getSize()
-        
+
+
+    def crossOver(self, counter, t2, counter2):
+        if len(self.children) >= counter:
+            if t2.selectNode(counter) is not None:
+                print "INSIDE CROSS 1:", t2.selectNode(counter)
+                self.children[counter-1] = t2.selectNode(counter2)
+                return
+            else:
+                print "INSIDE CROSS 1/2: "
+                self.children[counter-1] = t2
+                return
+        else:
+            counter -= len(self.children)
+            for child in self.children:
+                print "INSIDE CROSS 2"
+                if child.getSize() >= counter:
+                    print "INSIDE CROSS 3"
+                    return child.crossOver(counter, t2, counter2)
+                else:
+                    print "INSIDE CROSS 4"
+                    counter -= child.getSize()
+    
 
     def calcFitness(self, x, func):
         return np.sum(np.power(self.evaluate(x)-func,2))
@@ -121,7 +132,6 @@ class BinaryNode(object):
 #               emptyTerminals -= 1
 ##        print emptyTerminals
 #    return newNode
-
 
     
 class Population(object):
@@ -151,7 +161,7 @@ class Population(object):
     def initPopulation(self, size, listOperations, listTerminals):
         for i in range(0, size):
             self.appendRandomTree(listOperations, listTerminals)
-    
+ 
     def sortArray(self):
         tmp = sorted(self.array, key= lambda ind: ind['fitness'])
         self.array = tmp[:]
@@ -172,23 +182,21 @@ class Population(object):
                # print "TEMP DICT: ", newdict
                 crossPartner = random.randint(i+1,len(self.array)-1)
                # print "CROSS PARTNER: ", crossPartner
-#                crossPartnerIndex = random.randint(1,self.array[crossPartner]['tree'].getSize())
-                crossIndex = random.randint(1, self.array[i]['tree'].getSize()-1)
+                crossPartnerIndex = random.randint(2, self.array[crossPartner]['tree'].getSize())
+                crossIndex = random.randint(2, self.array[i]['tree'].getSize())
+               # print "CROSS PARTNER: ", crossPartner, "CROSSINDEX: ", crossPartnerIndex
                # print "BEFORE[",i,"] :",  self.array[i], "\nsize: ", self.array[i]['tree'].getSize()
                # print "PARTNER[",i,"] :", self.array[crossPartner], "\nsize: ", self.array[crossPartner]['tree'].getSize()
-                self.array[i]['tree'].crossOver(crossIndex, self.array[crossPartner]['tree'])
+               # self.array[i]['tree'].crossOver(crossIndex, self.array[crossPartner]['tree'], crossPartnerIndex)
                # print "AFTER[",i,"] :", self.array[i], "\nsize: ", self.array[i]['tree'].getSize()
                # print "LASTPOSITION[",i,"] :", self.array[len(self.array)-1], "\nsize: ", self.array[len(self.array)-1]['tree'].getSize()
                 self.sortArray()
             difference = self.array[0]['fitness']
             count += 1
-            for i in range(0, len(self.array)):
-                size = float(self.array[i]['tree'].getSize())
-            size = size/float(len(self.array))
-            print difference, count, len(self.array), size
-            #newlist = list(sorted(temp, key=lambda ind: ind['fitness']))
-            #population = list(newlist)
-#           difference = population[0]['fitness']
+#            for i in range(0, len(self.array)):
+#                size += float(self.array[i]['tree'].getSize()+1)
+#            size = size/float(len(self.array))
+            print difference, count, len(self.array)
 #            difference = 0            
         return count
                    
@@ -207,10 +215,11 @@ lT2 = ['x', 3.0, 5.0]
 population = Population()
 population.initPopulation(5, lO, lT)
 population.sortArray()
-print "SORTED: ", population.array[0]
+print "SORTED: ", population.array[0]['tree'], "SIZE: ", population.array[0]['size']
+#print "SELECTED: ", population.array[0]['tree'].selectNode(3)
 #print "SIZE: ", population.array[0]['tree'].iterativeChildren()
-print "GENERATIONS: ", population.reproduction(2)
-print "BEST INDIVIDUAL: ", population.array[0]
+#print "GENERATIONS: ", population.reproduction(2)
+#print "BEST INDIVIDUAL: ", population.array[0]
 #population = []
 #for i in range(0, 10):
 #    new = generateRandomTree(lO, lT)
