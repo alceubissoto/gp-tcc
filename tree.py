@@ -1,6 +1,7 @@
 import sys, random, math, copy
 import numpy as np
 sys.setrecursionlimit(20000)
+sys.settrace
 class BinaryNode(object):
     def __init__(self, value = None, arity = 2, children = [], size=0):
         self.value = value
@@ -24,7 +25,10 @@ class BinaryNode(object):
         elif self.value == '*':
             return self.children[0].evaluate(x) * self.children[1].evaluate(x)
         elif self.value == '/':
-            return self.children[0].evaluate(x) / self.children[1].evaluate(x)
+            try: 
+                return self.children[0].evaluate(x) / self.children[1].evaluate(x)
+            except ZeroDivisionError: 
+                return 1.0
         else:
             return self.value
 
@@ -53,13 +57,19 @@ class BinaryNode(object):
             #print 'FALHOU: ', binaryNode.value
             return False
 
-    def getSizeiii(self):
+    def getSizeI(self):
         counter = len(self.children)
         for child in self.children:
             counter += child.getSize()
         return counter
-    
-    def getSize(self):
+
+    def getSize(self, a=1):
+        a += len(self.children)
+        for child in self.children:
+            a += child.getSize()
+        return a
+
+    def getSizeIII(self):
 	results = []
         nodes = self.children
 	while 1:
@@ -87,27 +97,36 @@ class BinaryNode(object):
                 else:
                     counter -= child.getSize()
 
+    def mutation(self, counter, listOperations, listTerminals):
+        toBeMutated = self.selectNode(counter)
+        if [toBeMutated.value, len(toBeMutated.children)] in listOperations:
+            random_Operation = random.randrange(0,len(listOperations))
+            print listOperations[random_Operation][0]
+            toBeMutated.value = listOperations[random_Operation][0]
+        else:
+            random_Terminal = random.randrange(0,len(listTerminals))
+            toBeMutated.value = listTerminals[random_Terminal]
+            toBeMutated.children = []
+            
+
 
     def crossOver(self, counter, t2, counter2):
-        if len(self.children) >= counter:
-            if t2.selectNode(counter) is not None:
-                print "INSIDE CROSS 1:", t2.selectNode(counter)
+        if counter == 0:
+            return
+        elif len(self.children) >= counter:
+            counter = 0
+            if t2.selectNode(counter2) is not None:
                 self.children[counter-1] = t2.selectNode(counter2)
-                return
             else:
-                print "INSIDE CROSS 1/2: "
                 self.children[counter-1] = t2
-                return
         else:
             counter -= len(self.children)
             for child in self.children:
-                print "INSIDE CROSS 2"
                 if child.getSize() >= counter:
-                    print "INSIDE CROSS 3"
                     return child.crossOver(counter, t2, counter2)
                 else:
-                    print "INSIDE CROSS 4"
                     counter -= child.getSize()
+        return
     
 
     def calcFitness(self, x, func):
@@ -179,30 +198,32 @@ class Population(object):
                 self.array.pop()
                 newdict = copy.deepcopy(self.array[i])
                 self.array.append(newdict)
-               # print "TEMP DICT: ", newdict
+                # CROSSOVER
                 crossPartner = random.randint(i+1,len(self.array)-1)
                # print "CROSS PARTNER: ", crossPartner
                 crossPartnerIndex = random.randint(2, self.array[crossPartner]['tree'].getSize())
                 crossIndex = random.randint(2, self.array[i]['tree'].getSize())
-               # print "CROSS PARTNER: ", crossPartner, "CROSSINDEX: ", crossPartnerIndex
-               # print "BEFORE[",i,"] :",  self.array[i], "\nsize: ", self.array[i]['tree'].getSize()
-               # print "PARTNER[",i,"] :", self.array[crossPartner], "\nsize: ", self.array[crossPartner]['tree'].getSize()
-               # self.array[i]['tree'].crossOver(crossIndex, self.array[crossPartner]['tree'], crossPartnerIndex)
-               # print "AFTER[",i,"] :", self.array[i], "\nsize: ", self.array[i]['tree'].getSize()
-               # print "LASTPOSITION[",i,"] :", self.array[len(self.array)-1], "\nsize: ", self.array[len(self.array)-1]['tree'].getSize()
+
+                # MUTATION
+            #mutationSelection = random.randint(kept, len(self.array)-1)
+            
+                #print "CROSS PARTNER: ", crossPartner, "CROSSINDEX: ", crossPartnerIndex
+                #print "BEFORE[",i,"] :",  self.array[i], "\nsize: ", self.array[i]['tree'].getSize()
+                #print "PARTNER[",i,"] :", self.array[crossPartner], "\nsize: ", self.array[crossPartner]['tree'].getSize()
+                self.array[i]['tree'].crossOver(crossIndex, self.array[crossPartner]['tree'], crossPartnerIndex)
+                #print "AFTER[",i,"] :", self.array[i], "\nsize: ", self.array[i]['tree'].getSize()
+                #print "LASTPOSITION[",i,"] :", self.array[len(self.array)-1], "\nsize: ", self.array[len(self.array)-1]['tree'].getSize()
                 self.sortArray()
             difference = self.array[0]['fitness']
             count += 1
-#            for i in range(0, len(self.array)):
-#                size += float(self.array[i]['tree'].getSize()+1)
-#            size = size/float(len(self.array))
-            print difference, count, len(self.array)
+            print difference, count
+#            size = 0
 #            difference = 0            
         return count
                    
             
 x = np.array([-1000.0,-500.0,-100.0,0.0,100.0,500.0,1000.0])
-func = eval('x**2+x')
+func = eval('x**4+x**3+x**2+x+1')
 lO = [['+',2],['*',2],['-',2]]
 lT = ['x', 1.0, 2.0]
 lT2 = ['x', 3.0, 5.0]
@@ -213,13 +234,15 @@ lT2 = ['x', 3.0, 5.0]
 #for i in range(1, 10):
 #    print geno[i-1], "with size: ", geno[i-1].size
 population = Population()
-population.initPopulation(5, lO, lT)
-population.sortArray()
-
+population.initPopulation(50, lO, lT)
+#population.sortArray()
+size = 0
 #print "SELECTED: ", population.array[0]['tree'].selectNode(3)
-#print "SIZE: ", population.array[0]['tree'].iterativeChildren()
-print "GENERATIONS: ", population.reproduction(2)
+print "GENERATIONS: ", population.reproduction(1)
 print "BEST INDIVIDUAL: ", population.array[0]
+#population.array[0]['tree'].mutation(2, lO, lT)
+#print "SIZE: ", population.array[0]['tree'].getSize()
+#print "MUTATED: ", population.array[0]
 #population = []
 #for i in range(0, 10):
 #    new = generateRandomTree(lO, lT)
