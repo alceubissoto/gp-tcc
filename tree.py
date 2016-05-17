@@ -215,11 +215,11 @@ lT2 = ['x', 3.0, 5.0]
 population = Population()
 population.initPopulation(5, lO, lT)
 population.sortArray()
-print "SORTED: ", population.array[0]['tree'], "SIZE: ", population.array[0]['size']
+
 #print "SELECTED: ", population.array[0]['tree'].selectNode(3)
 #print "SIZE: ", population.array[0]['tree'].iterativeChildren()
-#print "GENERATIONS: ", population.reproduction(2)
-#print "BEST INDIVIDUAL: ", population.array[0]
+print "GENERATIONS: ", population.reproduction(2)
+print "BEST INDIVIDUAL: ", population.array[0]
 #population = []
 #for i in range(0, 10):
 #    new = generateRandomTree(lO, lT)
