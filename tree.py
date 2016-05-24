@@ -141,7 +141,6 @@ class BinaryNode(object):
     def selectRandomNode(self):
         size = self.getSize()
         counter = random.randint(1, size) 
-        results = []
         nodes = self.children
         while 1:
             newNodes = []
@@ -149,7 +148,6 @@ class BinaryNode(object):
                 counter -= 1
                 if counter == 0:
                     return node
-                #results.append(node.value)
                 if len(node.children) > 0:
                     for child in node.children:
                         newNodes.append(child)
@@ -171,13 +169,8 @@ class BinaryNode(object):
         if counter == 0:
             return
         elif len(self.children) >= counter:
-#            print "COUTNER: ", counter, "LEN: ", len(self.children)
-#            print "BEFORE: ", self.children[counter -1]
-#            print "before: ", self.children
             tmp = t2.selectRandomNode()
-#            print "SELCTRANDOMNODE: ", tmp
             self.children[counter-1] = newdict = copy.deepcopy(tmp)
-#            print "AFTER: ", self.children[counter-1]
             counter = 0
         else:
             counter -= len(self.children)
@@ -190,30 +183,10 @@ class BinaryNode(object):
     
 
     def calcFitness(self, x, lO, func):
-        return np.sum(np.power(self.evaluate(x, lO)-func,2))
+        return np.sum(np.power(self.evaluate(x, lO)-func,2))+self.getSize()
 #        return np.sum(np.power(eval(''.join([str(y) for y in self.writeFunc([])]))-func, 2))
 
-#def generateRandomTree(listOperations, listTerminals):
-#    random_Operation = random.randrange(0,len(listOperations))
-#    newNode = BinaryNode(listOperations[random_Operation][0],listOperations[random_Operation][1], [])
-#    emptyTerminals = listOperations[random_Operation][1]
-#    while True:
-#        decisionMaking = random.randint(1, 100)
-#        if emptyTerminals == 0:
-#            break
-#        #The probability of adding a terminal needs to be bigger than the one to add a function.
-#        elif decisionMaking < 40:
-#           random_Operation = random.randrange(0,len(listOperations))
-#           if newNode.addBinaryNode(BinaryNode(listOperations[random_Operation][0], listOperations[random_Operation][1], [])):
-#               emptyTerminals += listOperations[random_Operation][1] - 1
-#        else:
-#           random_Terminal = random.randrange(0,len(listTerminals))
-#           if newNode.addBinaryNode(BinaryNode(listTerminals[random_Terminal], 0, [])):
-#               emptyTerminals -= 1
-##        print emptyTerminals
-#    return newNode
-
-    
+ 
 class Population(object):
     def __init__(self, array = []):
         self.array = array
@@ -235,7 +208,6 @@ class Population(object):
                random_Terminal = random.randrange(0,len(listTerminals))
                if newNode.addBinaryNode(BinaryNode(listTerminals[random_Terminal], 0, [])):
                    emptyTerminals -= 1
-#            print emptyTerminals
         if (newNode.getSize() > 100):
             return self.appendRandomTree(listOperations, listTerminals, x)
         self.array.append({'fitness':newNode.calcFitness(x, listOperations, func),'tree':newNode})
@@ -265,21 +237,15 @@ class Population(object):
                 self.array.append(newdict)
                 # CROSSOVER
                 crossPartner = random.randint(i+1,len(self.array)-1)
-               # print "CROSS PARTNER: ", crossPartner
-                #crossPartnerIndex = random.randint(2, self.array[crossPartner]['tree'].getSize())
                 crossIndex = random.randint(2, self.array[i]['tree'].getSize())
-                #print "CROSS PARTNER: ", crossPartner, "CROSSINDEX: ", crossPartnerIndex
-                #print "BEFORE[",i,"] :",  self.array[i], "\nsize: ", self.array[i]['tree'].getSize()
-                #print "PARTNER[",i,"] :", self.array[crossPartner], "\nsize: ", self.array[crossPartner]['tree'].getSize()
                 self.array[i]['tree'].crossOver(crossIndex, self.array[crossPartner]['tree'])
                 self.array[i]['fitness'] = self.array[i]['tree'].calcFitness(x, lO, func)
-                #print "AFTER[",i,"] :", self.array[i], "\nsize: ", self.array[i]['tree'].getSize()
-                #print "LASTPOSITION[",i,"] :", self.array[len(self.array)-1], "\nsize: ", self.array[len(self.array)-1]['tree'].getSize()
             self.sortArray()     
             # MUTATION
-            #mutationSelection = random.randint(kept, len(self.array)-1)
-            #self.array[mutationSelection]['tree'].mutation(lO, lT)
-            #self.array[mutationSelection]['fitness'] = self.array[mutationSelection]['tree'].calcFitness(x, lO, func)
+            mutationSelection = random.randint(kept, len(self.array)-1)
+            self.array[mutationSelection]['tree'].mutation(lO, lT)
+            self.array[mutationSelection]['fitness'] = self.array[mutationSelection]['tree'].calcFitness(x, lO, func)
+            self.sortArray()
             difference = self.array[0]['fitness']
             count += 1
             print difference, count
@@ -292,12 +258,7 @@ func = eval('x_array**3+x_array**2+x_array+1')
 lO = [['+',2],['*',2],['-',2]]
 lT = ['x', 1.0, 2.0]
 lT2 = ['x', 3.0, 5.0]
-#for i in range(1, 10):
-#    newNode = generateRandomTree(lO, lT)
-#    geno.append(newNode)
 
-#for i in range(1, 10):
-#    print geno[i-1], "with size: ", geno[i-1].size
 population = Population()
 population.initPopulation(50, lO, lT, x_array)
 #population.sortArray()
