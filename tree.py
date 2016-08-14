@@ -75,7 +75,6 @@ class BinaryNode(object):
         
     def addBinaryNode(self, binaryNode):
         if len(self.children) < self.arity:
-            #print 'ADICIONOU: ', binaryNode.value
             self.children.append(binaryNode)
             return True
         elif self.arity > 0:
@@ -83,7 +82,6 @@ class BinaryNode(object):
                 if child.addBinaryNode(binaryNode):
                     return True
         else:
-            #print 'FALHOU: ', binaryNode.value
             return False
 
     def getSizeI(self):
@@ -191,7 +189,7 @@ class Population(object):
     def __init__(self, array = []):
         self.array = array
         
-    def appendRandomTree(self, listOperations, listTerminals, x):
+    def appendRandomTree(self, listOperations, listTerminals, x, func):
         random_Operation = random.randrange(0,len(listOperations))
         newNode = BinaryNode(listOperations[random_Operation][0],listOperations[random_Operation][1], [])
         emptyTerminals = listOperations[random_Operation][1]
@@ -209,24 +207,24 @@ class Population(object):
                if newNode.addBinaryNode(BinaryNode(listTerminals[random_Terminal], 0, [])):
                    emptyTerminals -= 1
         if (newNode.getSize() > 100):
-            return self.appendRandomTree(listOperations, listTerminals, x)
+            return self.appendRandomTree(listOperations, listTerminals, x, func)
         self.array.append({'fitness':newNode.calcFitness(x, listOperations, func),'tree':newNode})
 
-    def initPopulation(self, size, listOperations, listTerminals, x):
+    def initPopulation(self, size, listOperations, listTerminals, x, func):
         for i in range(0, size):
-            self.appendRandomTree(listOperations, listTerminals, x)
+            self.appendRandomTree(listOperations, listTerminals, x, func)
  
     def sortArray(self):
         tmp = sorted(self.array, key= lambda ind: ind['fitness'])
         self.array = tmp[:]
 
-    def reproduction(self, kept, cycles, lO, x):
+    def reproduction(self, kept, cycles, lO, x, func):
         count = 0
         difference = 1000000000.0
         while(count < cycles):
             for i in range(kept, len(self.array)):
                 self.array.pop(i)
-                self.appendRandomTree(lO, lT, x)
+                self.appendRandomTree(lO, lT, x, func)
             self.sortArray()
 
             for i in range(0, kept):
@@ -255,16 +253,16 @@ class Population(object):
                    
 x_array = np.array([-1000.0,-500.0,-100.0,0.0,100.0,500.0,1000.0])
 func = eval('x_array**3+x_array**2+x_array+1')
-lO = [['+',2],['*',2],['-',2]]
+lO = [['AND',2],['OR',2],['NOT',2]]
 lT = ['x', 1.0, 2.0]
 lT2 = ['x', 3.0, 5.0]
 
 population = Population()
-population.initPopulation(50, lO, lT, x_array)
+population.initPopulation(50, lO, lT, x_array, func)
 #population.sortArray()
 #size = 0
 #print "SELECTED: ", population.array[0]['tree'].selectNode(3)
-print "GENERATIONS: ", population.reproduction(10, 5000, lO, x_array)
+print "GENERATIONS: ", population.reproduction(10, 5000, lO, x_array, func)
 print "BEST INDIVIDUAL: ", population.array[0], "SIZE: ", population.array[0]['tree'].getSize(), "FITNESS: ", population.array[0]['tree'].calcFitness(x_array, lO, func)
 #print list(iter(population.array[0]['tree']))
 #print population.array[0]['tree'].evaluateList(x_array, lO)

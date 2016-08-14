@@ -1,6 +1,6 @@
 import sys, random, math, copy
-import numpy as np
-from itertools import chain, imap
+from itertools import chain, imap, product
+import matplotlib.pyplot as plt
 
 
 class BinaryNode(object):
@@ -30,7 +30,7 @@ class BinaryNode(object):
                 #Prepare the array A to pass the correct value of combination.
                 #Example: (0, 0, 0)
                 #         (0, 0, 1) ...
-                A.append(combination[j])
+                A.append(int(combination[j]))
             #evaluateRec(A) is responsible for do the actual evaluation, with the A values passed that were crafted.
             result.append(int(self.evaluateRec(A)))
 
@@ -220,7 +220,7 @@ class Population(object):
             if emptyTerminals == 0:
                 break
             #The probability of adding a terminal needs to be bigger than the one to add a function.
-            elif decisionMaking < 40:
+            elif decisionMaking < 30:
                random_Operation = random.randrange(0,len(listOperations))
                #Add a new node to the tree, selected randomically from the operation list.
                if newNode.addBinaryNode(BinaryNode(listOperations[random_Operation][0], listOperations[random_Operation][1], [])):
@@ -230,9 +230,6 @@ class Population(object):
                #Add a new node to the tree, selected randomically from the terminal list.
                if newNode.addBinaryNode(BinaryNode(listTerminals[random_Terminal], 0, [])):
                    emptyTerminals -= 1
-        #If the generated tree is bigger than the max allowed, re-do it.
-        if (newNode.getSize() > TREE_MAX_SIZE):
-            return self.appendRandomTree(listOperations, listTerminals, combList, S)
         #Calculate the fitness of the tree created.
         self.array.append({'fitness':newNode.calcFitness(combList, S),'tree':newNode})
 
@@ -254,6 +251,7 @@ class Population(object):
         difference = 1000000000.0
         crossCandidates = []
 
+#        while(difference > 0):
         while(count < cycles):
             del crossCandidates[:]
             #Select randomically a number of different individuals, and sort them.
@@ -302,19 +300,49 @@ class Population(object):
 
             #Start a new generation
             count += 1
+
+#            plt.figure(1)
+#            plt.subplot(111)
+#            plt.plot(count, difference, 'bo', count, bestSize, 'k')
             #Did we find the desired result?
             if difference == 0:
+#                plt.show()
                 break
 
             print difference, bestSize, worst, worstSize, count
         return
-                   
-lO = [['and',3],['or',3],['not',1]]
-lT = ['A[0]', 'A[1]', 'A[2]']
-TREE_MAX_SIZE = 120
+
+def createOperationList(number_inputs):
+    return [['and',number_inputs], ['or', number_inputs], ['not', 1]]
+
+def createTerminalList(number_inputs):
+    lT = []
+    for i in range(number_inputs):
+        lT.append('A['+ str(i) + ']')
+    return lT
+
+def createCombList(number_inputs):
+    return ["".join(seq) for seq in product("01", repeat=number_inputs)]
+
+
+def f(t):
+    return np.exp(-t) * np.cos(2*np.pi*t)
+
+#lO = [['and',3],['or',3],['not',1]]
+#lT = ['A[0]', 'A[1]', 'A[2]']
+TREE_MAX_SIZE = 100
+N_INPUTS = 2
+lO = createOperationList(N_INPUTS)
+lT = createTerminalList(N_INPUTS)
+combList = createCombList(N_INPUTS)
+
+print lO, lT, combList
+
 #combList = [[0, 0], [0, 1], [1, 0], [1, 1]]
-combList = [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 0, 1], [1, 1, 0], [1, 1, 1]]
-S = [0, 1, 1, 0, 1, 0, 0, 1]
+#combList = [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 0, 1], [1, 1, 0], [1, 1, 1]]
+#S = [0, 1, 1, 0, 1, 0, 0, 1]
+#S = [0, 1, 1, 0, 1, 0 ,0, 1, 1, 0, 0, 1, 0, 1, 1, 0]
+S = [0, 1, 1, 0]
 population = Population()
 population.initPopulation(500, lO, lT, combList, S)
 population.sortArray()
