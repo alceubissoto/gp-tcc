@@ -8,22 +8,26 @@ from itertools import chain, imap, product
 import Tkinter as tk
 
 LARGE_FONT = ("Verdana", 12)
-POPULATION_SIZE = None
-TREE_MAX_SIZE = None
-N_INPUTS = None
-TOURNAMENT_SIZE = None
+SMALL_FONT = ("Verdana", 8)
+POPULATION_SIZE = 400
+TREE_MAX_SIZE = 1000
+N_INPUTS = 6
+TOURNAMENT_SIZE = 5
+NUMBER_OF_GENERATIONS = 1000000
 lO = None
 lT = None
 xList = []
-yList = []
+yListBestFitness = []
+yListAverageFitness = []
 f = Figure(figsize=(5, 5), dpi=100)
 a = f.add_subplot(111)
 
 
 def animate():
-    global xList, yList, a
+    global xList, yListBestFitness, yListAverageFitness, a
     a.clear()
-    a.plot(xList, yList)
+    a.plot(xList, yListBestFitness, 'b-', label="Best")
+    a.plot(xList, yListAverageFitness, 'r-', label="Average")
     f.canvas.draw()
 
 class Gui(tk.Tk):
@@ -31,55 +35,102 @@ class Gui(tk.Tk):
 
         tk.Tk.__init__(self, *args, **kwargs)
 
-        label = tk.Label(self, text="Population Size \n Default: 120", font=LARGE_FONT)
+        label = tk.Label(self, text="Population Size", font=LARGE_FONT)
         label.grid(row=0, column=0)
+        label = tk.Label(self, text="Default: " + str(POPULATION_SIZE), font=SMALL_FONT)
+        label.grid(row=1, column=0)
         self.entry0 = tk.Entry(self, bd=5)
         self.entry0.grid(row=0, column=1)
 
         label = tk.Label(self, text="Tree Max Size", font=LARGE_FONT)
-        label.grid(row=1, column=0)
+        label.grid(row=2, column=0)
+        label = tk.Label(self, text="Default: " + str(TREE_MAX_SIZE), font=SMALL_FONT)
+        label.grid(row=3, column=0)
         self.entry1 = tk.Entry(self, bd=5)
-        self.entry1.grid(row=1, column=1)
+        self.entry1.grid(row=2, column=1)
 
         label = tk.Label(self, text="Number of Inputs", font=LARGE_FONT)
-        label.grid(row=2, column=0)
+        label.grid(row=4, column=0)
+        label = tk.Label(self, text="Default: " + str(N_INPUTS), font=SMALL_FONT)
+        label.grid(row=5, column=0)
         self.entry2 = tk.Entry(self, bd=5)
-        self.entry2.grid(row=2, column=1)
+        self.entry2.grid(row=4, column=1)
 
         label = tk.Label(self, text="Tournament Size", font=LARGE_FONT)
-        label.grid(row=3, column=0)
+        label.grid(row=6, column=0)
+        label = tk.Label(self, text="Default:" + str(TOURNAMENT_SIZE), font=SMALL_FONT)
+        label.grid(row=7, column=0)
         self.entry3 = tk.Entry(self, bd=5)
-        self.entry3.grid(row=3, column=1)
+        self.entry3.grid(row=6, column=1)
+
+        label = tk.Label(self, text="Number of Generations", font=LARGE_FONT)
+        label.grid(row=8, column=0)
+        label = tk.Label(self, text="Default: " + str(NUMBER_OF_GENERATIONS), font=SMALL_FONT)
+        label.grid(row=9, column=0)
+        self.entry4 = tk.Entry(self, bd=5)
+        self.entry4.grid(row=8, column=1)
 
         button = tk.Button(self, text="Start", command=self.startGeneticProgramming)
-        button.grid(row=4, column=0)
+        button.grid(row=10, column=0)
 
         canvas = FigureCanvasTkAgg(f, self)
         canvas.show()
-        canvas.get_tk_widget().grid(row=5)
+        canvas.get_tk_widget().grid(row=11)
+
+        self.text = tk.Text(self, wrap="word")
+        self.text.grid(row=11, column=1)
+
+    def write(self, txt):
+        self.text.insert(tk.END, str(txt))
 
     def startGeneticProgramming(self):
         print self.entry1.get(), self.entry2.get(), self.entry3.get()
-        global TREE_MAX_SIZE, POPULATION_SIZE, N_INPUTS, TOURNAMENT_SIZE, lO, lT
-        POPULATION_SIZE = int(self.entry0.get())
-        TREE_MAX_SIZE = int(self.entry1.get())
-        N_INPUTS = int(self.entry2.get())
-        TOURNAMENT_SIZE = int(self.entry3.get())
+        global TREE_MAX_SIZE, POPULATION_SIZE, N_INPUTS, TOURNAMENT_SIZE, NUMBER_OF_GENERATIONS, lO, lT
 
-        lO = createOperationList(N_INPUTS)
+        if self.entry0.get() != "":
+            POPULATION_SIZE = int(self.entry0.get())
+        if self.entry1.get() != "":
+            TREE_MAX_SIZE = int(self.entry1.get())
+        if self.entry2.get() != "":
+            N_INPUTS = int(self.entry2.get())
+        if self.entry3.get() != "":
+            TOURNAMENT_SIZE = int(self.entry3.get())
+        if self.entry4.get() != "":
+            NUMBER_OF_GENERATIONS = int(self.entry4.get())
+
+        PARITY_SIZE_M = 2 ** N_INPUTS
+
+        inputs = [None] * PARITY_SIZE_M
+        outputs = [None] * PARITY_SIZE_M
+
+        for i in range(PARITY_SIZE_M):
+            inputs[i] = [None] * N_INPUTS
+            value = i
+            dividor = PARITY_SIZE_M
+            parity = 1
+            for j in range(N_INPUTS):
+                dividor /= 2
+                if value >= dividor:
+                    inputs[i][j] = 1
+                    parity = int(not parity)
+                    value -= dividor
+                else:
+                    inputs[i][j] = 0
+            outputs[i] = parity
+
+        print outputs
+
+        lO = createOperationList(2)
         lT = createTerminalList(N_INPUTS)
         combList = createCombList(N_INPUTS)
 
         print lO, lT, combList
 
-        S = [0, 1, 1, 0, 1, 0, 0, 1]
-        # S = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0]
-        # S = [0, 1, 1, 0]
         population = Population()
-        population.initPopulation(POPULATION_SIZE, lO, lT, combList, S)
+        population.initPopulation(POPULATION_SIZE, lO, lT, combList, outputs)
         population.sortArray()
-        print "GENERATIONS: ", population.reproduction(100000, lO, combList, S, TOURNAMENT_SIZE)
-        print "BEST INDIVIDUAL: \n", population.array[0]['tree'], "SIZE: ", population.array[0]['tree'].getSize(), "FITNESS: ", population.array[0]['fitness']
+        population.reproduction(NUMBER_OF_GENERATIONS, lO, combList, outputs, TOURNAMENT_SIZE)
+        self.write("\nBEST INDIVIDUAL: \n" + str(population.array[0]['tree']) + "\nSIZE: " + str(population.array[0]['tree'].getSize()) + "\nFITNESS: " + str(population.array[0]['fitness']))
 
 
 class BinaryNode(object):
@@ -281,21 +332,24 @@ class BinaryNode(object):
         return
 
     def calcFitness(self, combList, S):
-        fitness = 0
+        fitness = 0.0
         evaluation = self.evaluateCircuit(combList)
         # check if the tree surpasses the maximum size allowed.
         if self.getSize() > TREE_MAX_SIZE:
-            fitness = 1000000
+            fitness = 1000.0
             return fitness
         # If the evaluation is smaller than the combList, something went wrong.
         elif len(combList) != len(evaluation):
-            fitness = 1000000
+            fitness = 1000.0
+            return fitness
+        elif self.getSize() < 2**N_INPUTS:
+            fitness = 1000.0
             return fitness
         # Adds 100 cost to each wrong evaluation result
         else:
             for i in range(len(S)):
                 if S[i] != evaluation[i]:
-                    fitness += 100
+                    fitness += 1.0
         return fitness
 
 
@@ -309,23 +363,28 @@ class Population(object):
         random_Operation = random.randrange(0, len(listOperations))
         newNode = BinaryNode(listOperations[random_Operation][0], listOperations[random_Operation][1], [])
         emptyTerminals = listOperations[random_Operation][1]
+        terminalIndex = 0
         while True:
             decisionMaking = random.randint(1, 100)
             # If emptyTerminals equals zero, there're no more empty spaces to add nodes in the tree.
             if emptyTerminals == 0:
                 break
             # The probability of adding a terminal needs to be bigger than the one to add a function.
-            elif decisionMaking < 30:
+            elif decisionMaking < 50:
                 random_Operation = random.randrange(0, len(listOperations))
                 # Add a new node to the tree, selected randomically from the operation list.
                 if newNode.addBinaryNode(
                         BinaryNode(listOperations[random_Operation][0], listOperations[random_Operation][1], [])):
                     emptyTerminals += listOperations[random_Operation][1] - 1
             else:
-                random_Terminal = random.randrange(0, len(listTerminals))
+
                 # Add a new node to the tree, selected randomically from the terminal list.
-                if newNode.addBinaryNode(BinaryNode(listTerminals[random_Terminal], 0, [])):
+                if newNode.addBinaryNode(BinaryNode(listTerminals[terminalIndex], 0, [])):
                     emptyTerminals -= 1
+                    terminalIndex += 1
+                    if (terminalIndex == len(listTerminals)):
+                        terminalIndex = 0
+
         # Calculate the fitness of the tree created.
         self.array.append({'fitness': newNode.calcFitness(combList, S), 'tree': newNode})
 
@@ -343,12 +402,18 @@ class Population(object):
         return tmp
 
     def reproduction(self, cycles, lO, combList, S, tournamentSize):
-        global xList, yList
+        global xList, yListBestFitness, yListAverageFitness, POPULATION_SIZE
         count = 0
         difference = 1000000000.0
         xList = []
-        yList = []
+        yListBestFitness = []
+        yListAverageFitness = []
+        average = 0.0
         crossCandidates = []
+
+        for index in range(0, len(self.array)):
+            average += self.array[index]['fitness']
+        average = average/POPULATION_SIZE
 
         #        while(difference > 0):
         while (count < cycles):
@@ -376,6 +441,7 @@ class Population(object):
             crossCandidates[0]['tree'].secondMutation(30, lO, lT)
             # Calculate new individual's fitness
             crossCandidates[0]['fitness'] = crossCandidates[0]['tree'].calcFitness(combList, S)
+            average += crossCandidates[0]['fitness']/POPULATION_SIZE
 
             # Select a random index to be performed the crossOver on the individual
             crossIndex = random.randint(1, crossCandidates[1]['tree'].getSize())
@@ -385,8 +451,12 @@ class Population(object):
             crossCandidates[1]['tree'].secondMutation(30, lO, lT)
             # Calculate new individual's fitness
             crossCandidates[1]['fitness'] = crossCandidates[1]['tree'].calcFitness(combList, S)
+            average += crossCandidates[1]['fitness'] / POPULATION_SIZE
 
             self.sortArray()
+
+            average -= self.array[POPULATION_SIZE + 1]['fitness'] / POPULATION_SIZE
+            average -= self.array[POPULATION_SIZE]['fitness'] / POPULATION_SIZE
             self.array.pop()
             self.array.pop()
 
@@ -398,9 +468,11 @@ class Population(object):
 
             # Start a new generation
             count += 1
-            if count % 100 == 0:
+            if count % 1000 == 0:
                 xList.append(count)
-                yList.append(difference)
+                yListBestFitness.append(difference)
+                yListAverageFitness.append(average)
+
                 animate()
 
             #            plt.figure(1)
@@ -409,7 +481,8 @@ class Population(object):
             # Did we find the desired result?
             if difference == 0:
                 xList.append(count)
-                yList.append(difference)
+                yListBestFitness.append(difference)
+                yListAverageFitness.append(average)
                 animate()
                 break
 
