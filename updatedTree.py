@@ -28,8 +28,8 @@ yListAverageFitness = []
 f = Figure(figsize=(6.7, 5), dpi=100)
 a = f.add_subplot(111)
 a.grid(True)
-moment = time.strftime("%Y-%b-%d__%H_%M_%S",time.localtime())
-logging.basicConfig(filename='statistics_' + moment + '.log', level=logging.INFO)
+#moment = time.strftime("%Y-%b-%d__%H_%M_%S",time.localtime())
+#logging.basicConfig(filename='statistics_' + moment + '.log', level=logging.INFO)
 
 def animate():
     global xListBest, xListAverage, yListBestFitness, yListAverageFitness, a
@@ -106,7 +106,7 @@ class Gui(tk.Tk):
         self.text.insert(tk.END, str(txt))
 
     def startGeneticProgramming(self):
-        for index in range(1, 100):
+        #for index in range(1, 100):
             print self.entry1.get(), self.entry2.get(), self.entry3.get()
             global TREE_MAX_SIZE, POPULATION_SIZE, N_INPUTS, TOURNAMENT_SIZE, NUMBER_OF_GENERATIONS, MUTATION_PROBABILITY, lO, lT
 
@@ -147,18 +147,16 @@ class Gui(tk.Tk):
 
             lO = createOperationList(2)
             lT = createTerminalList(N_INPUTS)
-            lT.append('1')
-            lT.append('0')
             combList = createCombList(N_INPUTS)
 
             print lO, lT, combList
-            logging.info("\n\nTree Max Size: " + str(TREE_MAX_SIZE) + ", " +
-                         "Populations Size: " + str(POPULATION_SIZE) + ", " +
-                         "Number of Inputs: " + str(N_INPUTS) + ", " +
-                         "Tournament Size: " + str(TOURNAMENT_SIZE) + ", " +
-                         "Number of Generations: " + str(NUMBER_OF_GENERATIONS) + ", " +
-                         "Mutation Probability: " + str(MUTATION_PROBABILITY) + ", " +
-                         "Start Time: " + str(datetime.datetime.now()))
+            #logging.info("\n\nTree Max Size: " + str(TREE_MAX_SIZE) + ", " +
+            #             "Populations Size: " + str(POPULATION_SIZE) + ", " +
+            #             "Number of Inputs: " + str(N_INPUTS) + ", " +
+            #             "Tournament Size: " + str(TOURNAMENT_SIZE) + ", " +
+            #             "Number of Generations: " + str(NUMBER_OF_GENERATIONS) + ", " +
+            #             "Mutation Probability: " + str(MUTATION_PROBABILITY) + ", " +
+            #             "Start Time: " + str(datetime.datetime.now()))
             population = Population()
             population.initPopulation(POPULATION_SIZE, lO, lT, combList, outputs)
             population.sortArray()
@@ -495,21 +493,22 @@ class Population(object):
             # Start a new generation
             count += 1
 
-            # if count % 1000 == 0:
-            #     average = 0.0
-            #     for index in range(0, len(self.array)):
-            #         average += self.array[index]['fitness']
-            #     average = average / POPULATION_SIZE
-            #     xListBest.append(count)
-            #     xListAverage.append(count)
-            #     yListBestFitness.append(difference)
-            #     yListAverageFitness.append(average)
-            #     animate()
-            #
-            # elif count % 100 == 0:
-            #     xListBest.append(count)
-            #     yListBestFitness.append(difference)
-            #     animate()
+            # Animation control
+            if count % 1000 == 0:
+                average = 0.0
+                for index in range(0, len(self.array)):
+                    average += self.array[index]['fitness']
+                average = average / POPULATION_SIZE
+                xListBest.append(count)
+                xListAverage.append(count)
+                yListBestFitness.append(difference)
+                yListAverageFitness.append(average)
+                animate()
+
+            elif count % 100 == 0:
+                xListBest.append(count)
+                yListBestFitness.append(difference)
+                animate()
 
             # Did we find the desired result?
             if difference == 0 or count >= cycles:
@@ -518,24 +517,24 @@ class Population(object):
                     average += self.array[index]['fitness']
                 average = average / POPULATION_SIZE
 
-                logging.info("Best Fitness: " + str(difference) + ", " +
-                             "Best Size: " + str(bestSize) + ", " +
-                             "Average Fitness: " + str(average) + ", " +
-                             "Generations: " + str(count) + ", " +
-                             "Finish Time: " + str(datetime.datetime.now()) + "\n")
+                #logging.info("Best Fitness: " + str(difference) + ", " +
+                #             "Best Size: " + str(bestSize) + ", " +
+                #             "Average Fitness: " + str(average) + ", " +
+                #             "Generations: " + str(count) + ", " +
+                #             "Finish Time: " + str(datetime.datetime.now()) + "\n")
 
             print difference, bestSize, worst, worstSize, count
 
             if difference == 0:
-                # xListBest.append(count)
-                # yListBestFitness.append(difference)
-                # average = 0.0
-                # for index in range(0, len(self.array)):
-                #     average += self.array[index]['fitness']
-                # average = average / POPULATION_SIZE
-                # xListAverage.append(count)
-                # yListAverageFitness.append(average)
-                # animate()
+                xListBest.append(count)
+                yListBestFitness.append(difference)
+                average = 0.0
+                for index in range(0, len(self.array)):
+                    average += self.array[index]['fitness']
+                average = average / POPULATION_SIZE
+                xListAverage.append(count)
+                yListAverageFitness.append(average)
+                animate()
                 break
 
         return
@@ -653,28 +652,6 @@ def createTerminalList(number_inputs):
 def createCombList(number_inputs):
     return ["".join(seq) for seq in product("01", repeat=number_inputs)]
 
-
-# lO = [['and',3],['or',3],['not',1]]
-# lT = ['A[0]', 'A[1]', 'A[2]']
-
-# print "POPULATION: ", population.array
-# size = 0
-# print "SELECTED: ", population.array[0]['tree'].selectNode(3)
-# print "GENERATIONS: ", population.reproduction(100000, lO, combList, S)
-# print "BEST INDIVIDUAL: \n", population.array[0]['tree'], "SIZE: ", population.array[0]['tree'].getSize(), "FITNESS: ", \
-# population.array[0]['tree'].calcFitness(combList, S)
-# print "Evaluate Circuit: ", population.array[0]['tree'].evaluateCircuit(combList)
-# print "POPULATION> ", population.array
-# print list(iter(population.array[0]['tree']))
-# print population.array[0]['tree'].evaluateList(x_array, lO)
-# print "evaluateRec: ", population.array[0]['tree'].evaluateCircuit(combList)
-# print "writeFunc: ", population.array[0]['tree'].writeFuncIt()
-# print "writeFunc: ", ' '.join([str(x) for x in population.array[0]['tree'].writeFunc([])])
-# print "eval: ", eval(' '.join([str(x) for x in population.array[0]['tree'].writeFunc([])]))
-# print "eval original: ", np.sum(np.power(population.array[0]['tree'].evaluate(x)-func, 2))
-# population.array[0]['tree'].mutation(lO, lT)
-# print "SIZE: ", population.array[0]['tree'].getSize()
-# print "MUTATED: ", population.array[0]
 
 app = Gui()
 app.mainloop()
